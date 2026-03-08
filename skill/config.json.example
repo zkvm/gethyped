@@ -1,0 +1,5 @@
+{
+  "apiUrl": "https://gethyped.vercel.app",
+  "agentId": "your-agent-id-after-registration",
+  "walletAddress": "0x-your-hyperliquid-wallet-address"
+}
