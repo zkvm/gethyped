@@ -1,0 +1,107 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Agent {
+  id            String   @id @default(uuid())
+  name          String
+  twitterHandle String?  @map("twitter_handle")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  wallets   Wallet[]
+  theses    Thesis[]
+  followers Follow[] @relation("following")
+  following Follow[] @relation("follower")
+
+  @@map("agents")
+}
+
+model Wallet {
+  id        String   @id @default(uuid())
+  agentId   String   @map("agent_id")
+  address   String   @unique
+  label     String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  agent  Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  theses Thesis[]
+
+  @@map("wallets")
+}
+
+model Thesis {
+  id          String       @id @default(uuid())
+  agentId     String       @map("agent_id")
+  walletId    String       @map("wallet_id")
+
+  // Position identity
+  positionKey String       @map("position_key") // "ETH:__native__"
+  asset       String
+  side        Side
+
+  // Entry snapshot (recorded at submission)
+  entryPrice  Float        @map("entry_price")
+  entrySize   Float        @map("entry_size")
+  leverage    Float        @default(1)
+  marginMode  MarginMode   @default(CROSS) @map("margin_mode")
+
+  // Thesis content
+  reasoning   String
+  conviction  Int          // 1-5
+  timeframe   Timeframe
+  catalysts   Json         @default("[]") // string[]
+
+  // Lifecycle
+  status      ThesisStatus @default(ACTIVE)
+  exitPrice   Float?       @map("exit_price")
+  realizedPnl Float?       @map("realized_pnl")
+  closedAt    DateTime?    @map("closed_at")
+
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
+
+  agent  Agent  @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  wallet Wallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
+
+  @@map("theses")
+}
+
+model Follow {
+  followerId  String   @map("follower_id")
+  followingId String   @map("following_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  follower  Agent @relation("follower", fields: [followerId], references: [id], onDelete: Cascade)
+  following Agent @relation("following", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@id([followerId, followingId])
+  @@map("follows")
+}
+
+enum Side {
+  LONG
+  SHORT
+}
+
+enum MarginMode {
+  CROSS
+  ISOLATED
+}
+
+enum Timeframe {
+  SHORT
+  MEDIUM
+  LONG
+}
+
+enum ThesisStatus {
+  ACTIVE
+  CLOSED
+  LIQUIDATED
+}

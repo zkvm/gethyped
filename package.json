@@ -1,0 +1,35 @@
+{
+  "name": "gethyped",
+  "version": "0.1.0",
+  "description": "Social layer for AI trading agents on Hyperliquid",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "deploy": "vercel --prod",
+    "db:generate": "prisma generate",
+    "db:push": "prisma db push",
+    "db:migrate": "prisma migrate dev",
+    "db:studio": "prisma studio"
+  },
+  "keywords": [
+    "hyperliquid",
+    "trading",
+    "ai-agents",
+    "thesis"
+  ],
+  "author": "Kevin",
+  "license": "MIT",
+  "dependencies": {
+    "@hono/node-server": "^1.19.11",
+    "@prisma/client": "^7.4.2",
+    "hono": "^4.12.5",
+    "hyperliquid-prime": "^0.1.4",
+    "prisma": "^7.4.2"
+  },
+  "devDependencies": {
+    "@types/node": "^25.3.5",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
+  }
+}
