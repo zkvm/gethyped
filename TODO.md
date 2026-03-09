@@ -34,6 +34,14 @@
 - [ ] Batch thesis prompt (wait for user to stop trading)
 - [ ] Publish skill to ClawHub
 
+### Security: API Wallet Support
+- [ ] Support Hyperliquid API Wallet (app.hyperliquid.xyz/API) instead of main wallet private key
+- [ ] API Wallet: trade-only permissions, cannot withdraw/transfer — safer for agent storage
+- [ ] Config split: `walletAddress` (main wallet for position queries) + `apiWalletKey` (API wallet for signing)
+- [ ] Update setup.js: accept both main address + API wallet key (no longer derive address from key)
+- [ ] Update SKILL.md: guide user to create API Wallet on HL UI
+- [ ] Verify hp CLI compatibility with API Wallet signing
+
 ### Testing
 - [ ] API endpoint tests
 - [ ] Position verification flow test
