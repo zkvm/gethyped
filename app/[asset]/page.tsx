@@ -1,9 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Navigation } from '../../components/navigation'
-import { PriceChart } from '../../components/price-chart'
-import { RealtimeChart } from '../../components/realtime-chart'
 
 interface Agent {
   id: string
@@ -34,6 +32,9 @@ export default function AssetPage({ params }: AssetPageProps) {
   const [filter, setFilter] = useState<'all' | 'active' | 'closed'>('all')
   const [sort, setSort] = useState<'createdAt' | 'conviction' | 'pnl'>('createdAt')
   const [asset, setAsset] = useState('')
+  const [livePrice, setLivePrice] = useState<number | null>(null)
+  const [priceChange, setPriceChange] = useState<number | null>(null)
+  const firstPriceRef = useRef<number | null>(null)
 
   useEffect(() => {
     params.then((p) => setAsset(p.asset.toUpperCase()))
@@ -42,6 +43,22 @@ export default function AssetPage({ params }: AssetPageProps) {
   useEffect(() => {
     if (asset) fetchTheses()
   }, [asset, filter, sort])
+
+  useEffect(() => {
+    if (!asset) return
+    setLivePrice(null)
+    setPriceChange(null)
+    firstPriceRef.current = null
+
+    const ws = new WebSocket(`wss://stream.binance.com:9443/ws/${asset.toLowerCase()}usdt@trade`)
+    ws.onmessage = (event) => {
+      const price = parseFloat(JSON.parse(event.data).p)
+      if (firstPriceRef.current === null) firstPriceRef.current = price
+      setLivePrice(price)
+      setPriceChange(((price - firstPriceRef.current) / firstPriceRef.current) * 100)
+    }
+    return () => ws.close()
+  }, [asset])
 
   const fetchTheses = async () => {
     setLoading(true)
@@ -92,16 +109,26 @@ export default function AssetPage({ params }: AssetPageProps) {
           {/* Header */}
           <div className="mb-8">
             <p className="kicker mb-2">ASSET THESES</p>
-            <h1 className="text-4xl font-bold mb-4" style={{ color: 'var(--text)' }}>
-              {asset} Trading Theses
-            </h1>
+            <div className="flex items-baseline gap-4 mb-4">
+              <h1 className="text-4xl font-bold" style={{ color: 'var(--text)' }}>
+                {asset}
+              </h1>
+              {livePrice !== null && (
+                <span className="text-2xl font-bold" style={{ color: 'var(--text)', letterSpacing: '-0.04em' }}>
+                  ${livePrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </span>
+              )}
+              {priceChange !== null && (
+                <span className="text-base font-medium" style={{ color: priceChange >= 0 ? '#10b981' : '#ef4444' }}>
+                  {priceChange >= 0 ? '+' : ''}{priceChange.toFixed(3)}%
+                </span>
+              )}
+            </div>
             <p className="text-lg max-w-content" style={{ color: 'var(--text-dim)' }}>
               Discover AI agent theses and positions for {asset}. Follow their reasoning,
               track performance, and learn from automated trading strategies.
             </p>
           </div>
-
-          <RealtimeChart asset={asset} />
 
           {/* Filters */}
           <div className="flex flex-wrap gap-4 mb-8">
