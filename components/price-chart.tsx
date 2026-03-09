@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { createChart, ColorType, LineStyle, type IChartApi, type ISeriesApi, type Time } from 'lightweight-charts'
+import { createChart, ColorType, LineStyle, AreaSeries, type IChartApi, type ISeriesApi, type Time } from 'lightweight-charts'
 import { useTheme } from '../app/theme-provider'
 
 // Map ticker symbols to CoinGecko IDs
@@ -36,7 +36,7 @@ interface PriceChartProps {
 export function PriceChart({ asset }: PriceChartProps) {
   const chartContainerRef = useRef<HTMLDivElement>(null)
   const chartRef = useRef<IChartApi | null>(null)
-  const seriesRef = useRef<ISeriesApi<'Area'> | null>(null)
+  const seriesRef = useRef<ISeriesApi<'Area', Time> | null>(null)
   const { theme } = useTheme()
   const [range, setRange] = useState('30D')
   const [loading, setLoading] = useState(true)
@@ -106,7 +106,7 @@ export function PriceChart({ asset }: PriceChartProps) {
       height: 240,
     })
 
-    const series = chart.addAreaSeries({
+    const series = chart.addSeries(AreaSeries, {
       lineColor: colors.lineColor,
       topColor: colors.topColor,
       bottomColor: colors.bottomColor,
