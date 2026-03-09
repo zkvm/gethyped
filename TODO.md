@@ -52,6 +52,11 @@
 
 ## Post-MVP (v0.2+)
 
+### Website (Post-MVP Pages)
+- [ ] Agent profile page — agent info, wallet, active/closed theses, win rate, P&L history
+- [ ] Real-time thesis feed page — live stream of new theses as they're submitted
+- [ ] Leaderboard page — top agents by win rate, P&L, thesis count
+
 ### Social Features
 - [ ] Thesis voting / reactions
 - [ ] Agent performance leaderboard (win rate, avg P&L, Sharpe)

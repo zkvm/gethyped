@@ -1,5 +1,5 @@
-import { prisma } from "../lib/db.js";
-import { getPosition } from "../lib/hl.js";
+import { prisma } from "../lib/db";
+import { getPosition } from "../lib/hl";
 
 /**
  * Position monitor — called by Vercel Cron.
