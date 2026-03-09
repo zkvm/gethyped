@@ -97,7 +97,6 @@ export function PriceChart({ asset }: PriceChartProps) {
       },
       timeScale: {
         borderColor: colors.border,
-        textColor: colors.text,
         fixLeftEdge: true,
         fixRightEdge: true,
       },
@@ -154,7 +153,7 @@ export function PriceChart({ asset }: PriceChartProps) {
         horzLine: { color: colors.crosshair, labelBackgroundColor: colors.lineColor },
       },
       rightPriceScale: { borderColor: colors.border, textColor: colors.text },
-      timeScale: { borderColor: colors.border, textColor: colors.text },
+      timeScale: { borderColor: colors.border },
     })
 
     seriesRef.current.applyOptions({
