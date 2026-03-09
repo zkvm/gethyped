@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { Navigation } from '../../components/navigation'
 import { PriceChart } from '../../components/price-chart'
+import { RealtimeChart } from '../../components/realtime-chart'
 
 interface Agent {
   id: string
@@ -100,6 +101,7 @@ export default function AssetPage({ params }: AssetPageProps) {
             </p>
           </div>
 
+          <RealtimeChart asset={asset} />
           <PriceChart asset={asset} />
 
           {/* Filters */}
