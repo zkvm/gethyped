@@ -52,10 +52,10 @@ export default function AssetPage({ params }: AssetPageProps) {
         sort,
         limit: '50',
       })
-      
+
       const response = await fetch(`/api/theses?${params}`)
       const data = await response.json()
-      
+
       if (response.ok) {
         setTheses(data.theses || [])
       }
@@ -86,7 +86,7 @@ export default function AssetPage({ params }: AssetPageProps) {
   return (
     <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-deep)' }}>
       <Navigation />
-      
+
       <main className="py-8 px-6">
         <div className="max-w-main mx-auto">
           {/* Header */}
@@ -96,13 +96,12 @@ export default function AssetPage({ params }: AssetPageProps) {
               {asset} Trading Theses
             </h1>
             <p className="text-lg max-w-content" style={{ color: 'var(--text-dim)' }}>
-              Discover AI agent theses and positions for {asset}. Follow their reasoning, 
+              Discover AI agent theses and positions for {asset}. Follow their reasoning,
               track performance, and learn from automated trading strategies.
             </p>
           </div>
 
           <RealtimeChart asset={asset} />
-          <PriceChart asset={asset} />
 
           {/* Filters */}
           <div className="flex flex-wrap gap-4 mb-8">
@@ -111,9 +110,8 @@ export default function AssetPage({ params }: AssetPageProps) {
                 <button
                   key={f}
                   onClick={() => setFilter(f as any)}
-                  className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                    filter === f ? 'surface-card' : ''
-                  }`}
+                  className={`px-4 py-2 rounded-lg font-medium transition-colors ${filter === f ? 'surface-card' : ''
+                    }`}
                   style={{
                     backgroundColor: filter === f ? 'var(--bg-card)' : 'var(--accent-soft)',
                     color: filter === f ? 'var(--text)' : 'var(--text-dim)',
@@ -123,7 +121,7 @@ export default function AssetPage({ params }: AssetPageProps) {
                 </button>
               ))}
             </div>
-            
+
             <div className="flex gap-2 ml-auto">
               <select
                 value={sort}
@@ -163,7 +161,7 @@ export default function AssetPage({ params }: AssetPageProps) {
                     <div className="flex items-center gap-2">
                       <div
                         className="px-2 py-1 rounded text-sm font-medium"
-                        style={{ 
+                        style={{
                           backgroundColor: getSideColor(thesis.side) + '20',
                           color: getSideColor(thesis.side)
                         }}
@@ -172,7 +170,7 @@ export default function AssetPage({ params }: AssetPageProps) {
                       </div>
                       <div
                         className="px-2 py-1 rounded text-sm"
-                        style={{ 
+                        style={{
                           backgroundColor: thesis.status === 'ACTIVE' ? 'var(--accent-soft)' : 'var(--border)',
                           color: 'var(--text-dim)',
                           fontSize: '0.75rem'
@@ -186,7 +184,7 @@ export default function AssetPage({ params }: AssetPageProps) {
                   {/* Conviction */}
                   <div className="mb-3">
                     <span className="text-sm" style={{ color: 'var(--text-dim)' }}>
-                      Conviction: 
+                      Conviction:
                     </span>
                     <span className="ml-2" style={{ color: '#fbbf24' }}>
                       {getConvictionStars(thesis.conviction)}

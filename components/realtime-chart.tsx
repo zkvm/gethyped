@@ -9,6 +9,7 @@ interface RealtimeChartProps {
 }
 
 const MAX_POINTS = 200
+const CHART_HEIGHT = 160
 
 export function RealtimeChart({ asset }: RealtimeChartProps) {
   const chartContainerRef = useRef<HTMLDivElement>(null)
@@ -20,10 +21,9 @@ export function RealtimeChart({ asset }: RealtimeChartProps) {
 
   const [currentPrice, setCurrentPrice] = useState<number | null>(null)
   const [priceChange, setPriceChange] = useState<number | null>(null)
-  const [connected, setConnected] = useState(false)
-  const [unsupported, setUnsupported] = useState(false)
+  const [status, setStatus] = useState<'connecting' | 'live' | 'unavailable'>('connecting')
 
-  const getChartColors = (isDark: boolean) => ({
+  const getColors = (isDark: boolean) => ({
     text: isDark ? '#ababab' : '#666666',
     grid: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(17,17,17,0.04)',
     border: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(17,17,17,0.08)',
@@ -31,11 +31,11 @@ export function RealtimeChart({ asset }: RealtimeChartProps) {
     crosshair: isDark ? 'rgba(255,255,255,0.25)' : 'rgba(17,17,17,0.2)',
   })
 
-  // Init chart
+  // Init chart once
   useEffect(() => {
     if (!chartContainerRef.current) return
 
-    const colors = getChartColors(theme === 'dark')
+    const colors = getColors(theme === 'dark')
 
     const chart = createChart(chartContainerRef.current, {
       layout: {
@@ -52,21 +52,17 @@ export function RealtimeChart({ asset }: RealtimeChartProps) {
         vertLine: { color: colors.crosshair, labelBackgroundColor: colors.line },
         horzLine: { color: colors.crosshair, labelBackgroundColor: colors.line },
       },
-      rightPriceScale: {
-        borderColor: colors.border,
-        textColor: colors.text,
-      },
+      rightPriceScale: { borderColor: colors.border, textColor: colors.text },
       timeScale: {
         borderColor: colors.border,
         timeVisible: true,
         secondsVisible: true,
-        fixLeftEdge: false,
         fixRightEdge: true,
       },
       handleScroll: false,
       handleScale: false,
       width: chartContainerRef.current.clientWidth,
-      height: 200,
+      height: CHART_HEIGHT,
     })
 
     const series = chart.addSeries(LineSeries, {
@@ -83,30 +79,26 @@ export function RealtimeChart({ asset }: RealtimeChartProps) {
     chartRef.current = chart
     seriesRef.current = series
 
-    const resizeObserver = new ResizeObserver((entries) => {
+    const ro = new ResizeObserver((entries) => {
       if (entries[0]) chart.applyOptions({ width: entries[0].contentRect.width })
     })
-    resizeObserver.observe(chartContainerRef.current)
+    ro.observe(chartContainerRef.current)
 
     return () => {
-      resizeObserver.disconnect()
+      ro.disconnect()
       chart.remove()
       chartRef.current = null
       seriesRef.current = null
     }
   }, [])
 
-  // Theme updates
+  // Theme sync
   useEffect(() => {
     if (!chartRef.current || !seriesRef.current) return
-    const colors = getChartColors(theme === 'dark')
-
+    const colors = getColors(theme === 'dark')
     chartRef.current.applyOptions({
       layout: { textColor: colors.text },
-      grid: {
-        vertLines: { color: colors.grid },
-        horzLines: { color: colors.grid },
-      },
+      grid: { vertLines: { color: colors.grid }, horzLines: { color: colors.grid } },
       crosshair: {
         vertLine: { color: colors.crosshair, labelBackgroundColor: colors.line },
         horzLine: { color: colors.crosshair, labelBackgroundColor: colors.line },
@@ -114,41 +106,40 @@ export function RealtimeChart({ asset }: RealtimeChartProps) {
       rightPriceScale: { borderColor: colors.border, textColor: colors.text },
       timeScale: { borderColor: colors.border },
     })
-
     seriesRef.current.applyOptions({ color: colors.line })
   }, [theme])
 
-  // WebSocket connection
+  // WebSocket
   useEffect(() => {
-    const symbol = `${asset.toLowerCase()}usdt`
-
     pointsRef.current = []
     setCurrentPrice(null)
     setPriceChange(null)
-    setConnected(false)
-    setUnsupported(false)
+    setStatus('connecting')
 
+    // Clear series data on asset change
+    seriesRef.current?.setData([])
+
+    const symbol = `${asset.toLowerCase()}usdt`
     const ws = new WebSocket(`wss://stream.binance.com:9443/ws/${symbol}@trade`)
     wsRef.current = ws
 
-    ws.onopen = () => setConnected(true)
-
     ws.onmessage = (event) => {
+      // First successful message — mark as live
+      setStatus('live')
+
       const trade = JSON.parse(event.data)
       const price = parseFloat(trade.p)
       const time = Math.floor(trade.T / 1000) as Time
 
       const points = pointsRef.current
       const last = points[points.length - 1]
-
-      // Lightweight Charts requires strictly increasing time — skip dupes
       if (last && last.time >= time) return
 
-      const newPoint = { time, value: price }
-      points.push(newPoint)
+      const point = { time, value: price }
+      points.push(point)
       if (points.length > MAX_POINTS) points.shift()
 
-      seriesRef.current?.update(newPoint)
+      seriesRef.current?.update(point)
       chartRef.current?.timeScale().scrollToRealTime()
 
       setCurrentPrice(price)
@@ -158,8 +149,10 @@ export function RealtimeChart({ asset }: RealtimeChartProps) {
       }
     }
 
-    ws.onerror = () => setUnsupported(true)
-    ws.onclose = () => setConnected(false)
+    ws.onclose = (e) => {
+      // Only mark unavailable if we never received data (code 1006 = abnormal close = bad symbol)
+      if (pointsRef.current.length === 0) setStatus('unavailable')
+    }
 
     return () => {
       ws.close()
@@ -170,58 +163,49 @@ export function RealtimeChart({ asset }: RealtimeChartProps) {
   const isPositive = priceChange !== null && priceChange >= 0
 
   return (
-    <div className="surface-card p-6 mb-6">
-      {/* Header */}
-      <div className="flex items-start justify-between mb-5">
-        <div>
-          <p className="kicker mb-1">LIVE PRICE</p>
-          {currentPrice !== null ? (
-            <div className="flex items-baseline gap-3">
-              <span
-                className="text-2xl font-bold"
-                style={{ color: 'var(--text)', letterSpacing: '-0.04em' }}
-              >
+    <div className="surface-card p-5 mb-6">
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-baseline gap-3">
+          <p className="kicker">LIVE</p>
+          {currentPrice !== null && (
+            <>
+              <span className="text-xl font-bold" style={{ color: 'var(--text)', letterSpacing: '-0.04em' }}>
                 ${currentPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </span>
               {priceChange !== null && (
-                <span className="text-sm font-medium" style={{ color: isPositive ? '#10b981' : '#ef4444' }}>
+                <span className="text-sm" style={{ color: isPositive ? '#10b981' : '#ef4444' }}>
                   {isPositive ? '+' : ''}{priceChange.toFixed(3)}%
                 </span>
               )}
-            </div>
-          ) : (
-            <div className="text-sm" style={{ color: 'var(--text-soft)' }}>
-              {unsupported ? `No live feed for ${asset}` : 'Connecting...'}
-            </div>
+            </>
+          )}
+          {status === 'connecting' && (
+            <span className="text-xs" style={{ color: 'var(--text-soft)' }}>connecting...</span>
+          )}
+          {status === 'unavailable' && (
+            <span className="text-xs" style={{ color: 'var(--text-soft)' }}>unavailable for {asset}</span>
           )}
         </div>
 
         {/* Status dot */}
-        <div className="flex items-center gap-2 mt-1">
-          <div
-            className="w-2 h-2 rounded-full"
-            style={{
-              backgroundColor: unsupported ? '#ef4444' : connected ? '#10b981' : '#fbbf24',
-              boxShadow: connected ? '0 0 6px #10b981' : 'none',
-            }}
-          />
-          <span className="text-xs" style={{ color: 'var(--text-soft)', fontFamily: 'var(--font-jetbrains-mono), monospace' }}>
-            {unsupported ? 'UNAVAILABLE' : connected ? 'LIVE' : 'CONNECTING'}
-          </span>
-        </div>
+        <div
+          className="w-1.5 h-1.5 rounded-full"
+          style={{
+            backgroundColor: status === 'live' ? '#10b981' : status === 'unavailable' ? '#ef4444' : '#fbbf24',
+            boxShadow: status === 'live' ? '0 0 5px #10b981' : 'none',
+          }}
+        />
       </div>
 
-      {/* Chart */}
-      {unsupported ? (
-        <div
-          className="flex items-center justify-center"
-          style={{ height: 200, color: 'var(--text-soft)', fontSize: '0.875rem' }}
-        >
-          Live feed unavailable for {asset}
-        </div>
-      ) : (
-        <div ref={chartContainerRef} style={{ width: '100%' }} />
-      )}
+      {/* Always mounted so chart ref stays attached */}
+      <div
+        ref={chartContainerRef}
+        style={{
+          width: '100%',
+          opacity: status === 'unavailable' ? 0 : 1,
+          height: status === 'unavailable' ? 0 : 'auto',
+        }}
+      />
     </div>
   )
 }
