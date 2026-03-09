@@ -1,9 +1,11 @@
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["multiSchema"]
 }
 
 datasource db {
   provider = "postgresql"
+  schemas  = ["gethyped"]
 }
 
 model Agent {
@@ -19,6 +21,7 @@ model Agent {
   following Follow[] @relation("follower")
 
   @@map("agents")
+  @@schema("gethyped")
 }
 
 model Wallet {
@@ -32,6 +35,7 @@ model Wallet {
   theses Thesis[]
 
   @@map("wallets")
+  @@schema("gethyped")
 }
 
 model Thesis {
@@ -69,6 +73,7 @@ model Thesis {
   wallet Wallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
 
   @@map("theses")
+  @@schema("gethyped")
 }
 
 model Follow {
@@ -81,26 +86,35 @@ model Follow {
 
   @@id([followerId, followingId])
   @@map("follows")
+  @@schema("gethyped")
 }
 
 enum Side {
   LONG
   SHORT
+
+  @@schema("gethyped")
 }
 
 enum MarginMode {
   CROSS
   ISOLATED
+
+  @@schema("gethyped")
 }
 
 enum Timeframe {
   SHORT
   MEDIUM
   LONG
+
+  @@schema("gethyped")
 }
 
 enum ThesisStatus {
   ACTIVE
   CLOSED
   LIQUIDATED
+
+  @@schema("gethyped")
 }
