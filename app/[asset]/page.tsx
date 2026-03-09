@@ -23,7 +23,7 @@ interface Thesis {
 }
 
 interface AssetPageProps {
-  params: { asset: string }
+  params: Promise<{ asset: string }>
 }
 
 export default function AssetPage({ params }: AssetPageProps) {
@@ -31,11 +31,14 @@ export default function AssetPage({ params }: AssetPageProps) {
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<'all' | 'active' | 'closed'>('all')
   const [sort, setSort] = useState<'createdAt' | 'conviction' | 'pnl'>('createdAt')
-
-  const asset = params.asset.toUpperCase()
+  const [asset, setAsset] = useState('')
 
   useEffect(() => {
-    fetchTheses()
+    params.then((p) => setAsset(p.asset.toUpperCase()))
+  }, [params])
+
+  useEffect(() => {
+    if (asset) fetchTheses()
   }, [asset, filter, sort])
 
   const fetchTheses = async () => {
