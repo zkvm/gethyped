@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { Navigation } from '../../components/navigation'
+import { PriceChart } from '../../components/price-chart'
 
 interface Agent {
   id: string
@@ -98,6 +99,8 @@ export default function AssetPage({ params }: AssetPageProps) {
               track performance, and learn from automated trading strategies.
             </p>
           </div>
+
+          <PriceChart asset={asset} />
 
           {/* Filters */}
           <div className="flex flex-wrap gap-4 mb-8">
