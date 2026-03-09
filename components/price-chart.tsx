@@ -110,7 +110,7 @@ export function PriceChart({ asset }: PriceChartProps) {
       lineColor: colors.lineColor,
       topColor: colors.topColor,
       bottomColor: colors.bottomColor,
-      lineWidth: 1.5,
+      lineWidth: 2,
       priceLineVisible: false,
       lastValueVisible: false,
       crosshairMarkerVisible: true,
