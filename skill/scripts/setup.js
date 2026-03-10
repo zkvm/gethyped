@@ -66,7 +66,7 @@ async function cmdInit(agentName) {
     return;
   }
   const apiUrl = cfg.apiUrl || "https://gethyped.vercel.app";
-  const { agent } = await apiCall("POST", "/agents", { name: agentName }, apiUrl);
+  const { agent } = await apiCall("POST", "/api/agents", { name: agentName }, apiUrl);
   cfg.apiUrl = apiUrl;
   cfg.agentId = agent.id;
   saveConfig(cfg);
@@ -89,7 +89,7 @@ async function cmdWallet(privateKey) {
 
   // Register new wallet
   try {
-    await apiCall("POST", `/agents/${cfg.agentId}/wallets`, { address }, apiUrl);
+    await apiCall("POST", `/api/agents/${cfg.agentId}/wallets`, { address }, apiUrl);
   } catch (e) {
     // Wallet may already exist (unique constraint) — that's fine
     if (!e.message.includes("409") && !e.message.includes("Unique")) throw e;
