@@ -18,8 +18,8 @@ export async function GET(
       const positions = await getAllPositions(wallet.address)
       for (const pos of positions) {
         // Check if there's an active thesis for this position
-        const positionKey = pos.market
-          ? `${pos.baseAsset}:${(pos.market as any).dex ?? "__native__"}`
+        const positionKey = pos.coin.includes(":")
+          ? `${pos.baseAsset}:${pos.coin.split(":")[0]}`
           : `${pos.baseAsset}:__native__`
 
         const activeThesis = await prisma.thesis.findFirst({
