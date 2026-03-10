@@ -1,5 +1,5 @@
 import { prisma } from "../lib/db";
-import { getPosition } from "../lib/hl";
+import { getPosition, getMarkPrice } from "../lib/hl";
 
 /**
  * Position monitor — called by Vercel Cron.
@@ -25,16 +25,18 @@ export async function monitorPositions() {
       const position = await getPosition(thesis.wallet.address, thesis.positionKey);
 
       if (!position || position.size === 0) {
-        // Position closed
+        // Position closed — fetch mark price for exit
+        const [asset] = thesis.positionKey.split(":")
+        const exitPx = await getMarkPrice(asset)
         await prisma.thesis.update({
           where: { id: thesis.id },
           data: {
             status: "CLOSED",
-            exitPrice: position?.markPrice ?? 0,
+            exitPrice: exitPx,
             realizedPnl: calculatePnl(
               thesis.side,
               thesis.entryPrice,
-              position?.markPrice ?? 0,
+              exitPx,
               thesis.entrySize
             ),
             closedAt: new Date(),
@@ -42,8 +44,8 @@ export async function monitorPositions() {
         });
         results.closed++;
       } else if (
-        (thesis.side === "LONG" && position.side === "short") ||
-        (thesis.side === "SHORT" && position.side === "long")
+        (thesis.side === "LONG" && position.side === "SHORT") ||
+        (thesis.side === "SHORT" && position.side === "LONG")
       ) {
         // Side flipped — close old thesis
         await prisma.thesis.update({

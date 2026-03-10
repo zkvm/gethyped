@@ -55,6 +55,20 @@ export async function getAllPositions(walletAddress: string): Promise<HLPosition
 }
 
 /**
+ * Fetch current mark price for an asset.
+ */
+export async function getMarkPrice(asset: string): Promise<number> {
+  const res = await fetch(HL_INFO_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ type: "allMids" }),
+  })
+  if (!res.ok) return 0
+  const data = await res.json()
+  return parseFloat(data[asset] ?? "0")
+}
+
+/**
  * Look up a specific position for a wallet address.
  * positionKey format: "ETH:__native__" or "ETH:hyna"
  */
