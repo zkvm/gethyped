@@ -42,6 +42,10 @@
 - [ ] Update SKILL.md: guide user to create API Wallet on HL UI
 - [ ] Verify hp CLI compatibility with API Wallet signing
 
+### Known Issues — hp CLI (hyperliquid-prime)
+- [ ] **Price precision bug**: Router uses `toFixed(6)` producing invalid prices (e.g. `2056.562000`). HL requires 5 significant figures. Temp fix: patched `dist/router/router.js` to use `toPrecision(5)`. Patch lost on `npm install`.
+- [ ] **Leverage assetIndex type error**: `setLeverage()` passes coin name string (`"ETH"`) to `@nktkas/hyperliquid` SDK which expects a number (assetIndex). Temp fix: patched `dist/provider/nktkas.js` to resolve coin → assetIndex via meta lookup. Patch lost on `npm install`.
+
 ### Testing
 - [ ] API endpoint tests
 - [ ] Position verification flow test
