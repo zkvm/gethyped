@@ -165,7 +165,7 @@ export default function AssetPage({ params }: AssetPageProps) {
             <div className="flex flex-col gap-4">
               {theses.map((thesis) => (
                 <div key={thesis.id} className="surface-card p-6">
-                  {/* Top row: agent + badges */}
+                  {/* Top row: agent + side/status */}
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-3">
                       <span className="font-semibold" style={{ color: 'var(--text)' }}>
@@ -196,26 +196,17 @@ export default function AssetPage({ params }: AssetPageProps) {
                         </span>
                       )}
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-3">
                       <span
-                        className="px-2 py-0.5 rounded text-xs font-semibold"
-                        style={{
-                          backgroundColor: sideColor(thesis.side) + '18',
-                          color: sideColor(thesis.side),
-                          fontFamily: 'var(--font-jetbrains-mono), monospace',
-                          letterSpacing: '0.06em',
-                        }}
+                        className="font-semibold"
+                        style={{ color: sideColor(thesis.side), fontSize: '0.95rem' }}
                       >
                         {thesis.side}
                       </span>
+                      <span style={{ color: 'var(--border-strong)', fontSize: '0.8rem' }}>·</span>
                       <span
-                        className="px-2 py-0.5 rounded text-xs"
-                        style={{
-                          backgroundColor: 'var(--accent-soft)',
-                          color: 'var(--text-soft)',
-                          fontFamily: 'var(--font-jetbrains-mono), monospace',
-                          letterSpacing: '0.06em',
-                        }}
+                        className="font-medium"
+                        style={{ color: 'var(--text-soft)', fontSize: '0.95rem' }}
                       >
                         {thesis.status}
                       </span>
@@ -233,34 +224,20 @@ export default function AssetPage({ params }: AssetPageProps) {
 
                   {/* Stats row */}
                   <div
-                    className="flex flex-wrap gap-6 pt-4"
+                    className="flex flex-wrap items-baseline gap-6 pt-4"
                     style={{ borderTop: '1px solid var(--border)' }}
                   >
-                    <div>
-                      <div className="text-xs mb-0.5" style={{ color: 'var(--text-soft)', fontFamily: 'var(--font-jetbrains-mono), monospace', letterSpacing: '0.1em' }}>ENTRY PRICE</div>
-                      <div className="text-sm font-medium" style={{ color: 'var(--text)' }}>
-                        ${thesis.entryPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-xs mb-0.5" style={{ color: 'var(--text-soft)', fontFamily: 'var(--font-jetbrains-mono), monospace', letterSpacing: '0.1em' }}>ENTRY SIZE</div>
-                      <div className="text-sm font-medium" style={{ color: 'var(--text)' }}>
-                        {thesis.entrySize.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 4 })}
-                      </div>
-                    </div>
+                    <span className="text-xl font-bold" style={{ color: 'var(--text)', letterSpacing: '-0.03em' }}>
+                      ${thesis.entryPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </span>
+                    <span className="text-xl font-bold" style={{ color: 'var(--text)', letterSpacing: '-0.03em' }}>
+                      {thesis.entrySize.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 4 })} {asset}
+                    </span>
                     {thesis.realizedPnl !== undefined && thesis.realizedPnl !== null && (
-                      <div>
-                        <div className="text-xs mb-0.5" style={{ color: 'var(--text-soft)', fontFamily: 'var(--font-jetbrains-mono), monospace', letterSpacing: '0.1em' }}>REALIZED PNL</div>
-                        <div className="text-sm font-medium" style={{ color: thesis.realizedPnl >= 0 ? '#10b981' : '#ef4444' }}>
-                          {thesis.realizedPnl >= 0 ? '+' : ''}{thesis.realizedPnl.toFixed(2)} USDC
-                        </div>
-                      </div>
+                      <span className="text-xl font-bold" style={{ color: thesis.realizedPnl >= 0 ? '#10b981' : '#ef4444', letterSpacing: '-0.03em' }}>
+                        {thesis.realizedPnl >= 0 ? '+' : ''}${Math.abs(thesis.realizedPnl).toFixed(2)}
+                      </span>
                     )}
-                    <div className="ml-auto self-end">
-                      <div className="text-xs" style={{ color: 'var(--text-soft)', fontFamily: 'var(--font-jetbrains-mono), monospace' }}>
-                        {new Date(thesis.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
-                      </div>
-                    </div>
                   </div>
                 </div>
               ))}
