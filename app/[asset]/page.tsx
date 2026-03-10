@@ -6,16 +6,16 @@ import { Navigation } from '../../components/navigation'
 interface Agent {
   id: string
   name: string
+  twitterHandle?: string
 }
 
 interface Thesis {
   id: string
   asset: string
   side: 'LONG' | 'SHORT'
-  conviction: number
-  timeframe: string
   reasoning: string
   entryPrice: number
+  entrySize: number
   realizedPnl?: number
   status: 'ACTIVE' | 'CLOSED'
   createdAt: string
@@ -83,22 +83,7 @@ export default function AssetPage({ params }: AssetPageProps) {
     }
   }
 
-  const formatPnl = (pnl: number) => {
-    const isPositive = pnl > 0
-    return (
-      <span style={{ color: isPositive ? '#10b981' : '#ef4444' }}>
-        {isPositive ? '+' : ''}{pnl.toFixed(2)} USDC
-      </span>
-    )
-  }
-
-  const getSideColor = (side: string) => {
-    return side === 'LONG' ? '#10b981' : '#ef4444'
-  }
-
-  const getConvictionStars = (conviction: number) => {
-    return '★'.repeat(conviction) + '☆'.repeat(5 - conviction)
-  }
+  const sideColor = (side: string) => side === 'LONG' ? '#10b981' : '#ef4444'
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-deep)' }}>
@@ -167,7 +152,7 @@ export default function AssetPage({ params }: AssetPageProps) {
             </div>
           </div>
 
-          {/* Theses Grid */}
+          {/* Theses List */}
           {loading ? (
             <div className="text-center py-12">
               <div className="inline-block w-8 h-8 border-2 border-current border-r-transparent rounded-full animate-spin"></div>
@@ -177,74 +162,104 @@ export default function AssetPage({ params }: AssetPageProps) {
               <p style={{ color: 'var(--text-dim)' }}>No theses found for {asset}</p>
             </div>
           ) : (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="flex flex-col gap-4">
               {theses.map((thesis) => (
                 <div key={thesis.id} className="surface-card p-6">
-                  {/* Agent & Status */}
+                  {/* Top row: agent + badges */}
                   <div className="flex items-center justify-between mb-4">
-                    <div className="font-medium" style={{ color: 'var(--text)' }}>
-                      {thesis.agent.name}
+                    <div className="flex items-center gap-3">
+                      <span className="font-semibold" style={{ color: 'var(--text)' }}>
+                        {thesis.agent.name}
+                      </span>
+                      {thesis.agent.twitterHandle ? (
+                        <a
+                          href={`https://twitter.com/${thesis.agent.twitterHandle}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs"
+                          style={{
+                            color: 'var(--text-soft)',
+                            fontFamily: 'var(--font-jetbrains-mono), monospace',
+                            textDecoration: 'none',
+                          }}
+                          onMouseEnter={e => (e.currentTarget.style.color = 'var(--text-dim)')}
+                          onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-soft)')}
+                        >
+                          @{thesis.agent.twitterHandle}
+                        </a>
+                      ) : (
+                        <span
+                          className="text-xs"
+                          style={{ color: 'var(--text-soft)', fontFamily: 'var(--font-jetbrains-mono), monospace' }}
+                        >
+                          @—
+                        </span>
+                      )}
                     </div>
                     <div className="flex items-center gap-2">
-                      <div
-                        className="px-2 py-1 rounded text-sm font-medium"
+                      <span
+                        className="px-2 py-0.5 rounded text-xs font-semibold"
                         style={{
-                          backgroundColor: getSideColor(thesis.side) + '20',
-                          color: getSideColor(thesis.side)
+                          backgroundColor: sideColor(thesis.side) + '18',
+                          color: sideColor(thesis.side),
+                          fontFamily: 'var(--font-jetbrains-mono), monospace',
+                          letterSpacing: '0.06em',
                         }}
                       >
                         {thesis.side}
-                      </div>
-                      <div
-                        className="px-2 py-1 rounded text-sm"
+                      </span>
+                      <span
+                        className="px-2 py-0.5 rounded text-xs"
                         style={{
-                          backgroundColor: thesis.status === 'ACTIVE' ? 'var(--accent-soft)' : 'var(--border)',
-                          color: 'var(--text-dim)',
-                          fontSize: '0.75rem'
+                          backgroundColor: 'var(--accent-soft)',
+                          color: 'var(--text-soft)',
+                          fontFamily: 'var(--font-jetbrains-mono), monospace',
+                          letterSpacing: '0.06em',
                         }}
                       >
                         {thesis.status}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Reasoning — multiline */}
+                  <div className="mb-5" style={{ color: 'var(--text)', fontSize: '0.9rem', lineHeight: '1.7' }}>
+                    {thesis.reasoning.split('\n').map((line, i) => (
+                      <p key={i} style={{ marginBottom: line === '' ? '0.5rem' : 0 }}>
+                        {line || '\u00A0'}
+                      </p>
+                    ))}
+                  </div>
+
+                  {/* Stats row */}
+                  <div
+                    className="flex flex-wrap gap-6 pt-4"
+                    style={{ borderTop: '1px solid var(--border)' }}
+                  >
+                    <div>
+                      <div className="text-xs mb-0.5" style={{ color: 'var(--text-soft)', fontFamily: 'var(--font-jetbrains-mono), monospace', letterSpacing: '0.1em' }}>ENTRY PRICE</div>
+                      <div className="text-sm font-medium" style={{ color: 'var(--text)' }}>
+                        ${thesis.entryPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </div>
                     </div>
-                  </div>
-
-                  {/* Conviction */}
-                  <div className="mb-3">
-                    <span className="text-sm" style={{ color: 'var(--text-dim)' }}>
-                      Conviction:
-                    </span>
-                    <span className="ml-2" style={{ color: '#fbbf24' }}>
-                      {getConvictionStars(thesis.conviction)}
-                    </span>
-                  </div>
-
-                  {/* Reasoning */}
-                  <p className="mb-4 text-sm leading-relaxed" style={{ color: 'var(--text)' }}>
-                    {thesis.reasoning}
-                  </p>
-
-                  {/* Stats */}
-                  <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
-                      <div style={{ color: 'var(--text-soft)' }}>Entry Price</div>
-                      <div style={{ color: 'var(--text)' }}>${thesis.entryPrice.toFixed(2)}</div>
+                      <div className="text-xs mb-0.5" style={{ color: 'var(--text-soft)', fontFamily: 'var(--font-jetbrains-mono), monospace', letterSpacing: '0.1em' }}>ENTRY SIZE</div>
+                      <div className="text-sm font-medium" style={{ color: 'var(--text)' }}>
+                        {thesis.entrySize.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 4 })}
+                      </div>
                     </div>
-                    <div>
-                      <div style={{ color: 'var(--text-soft)' }}>Timeframe</div>
-                      <div style={{ color: 'var(--text)' }}>{thesis.timeframe}</div>
-                    </div>
-                    {thesis.status === 'CLOSED' && thesis.realizedPnl !== undefined && (
-                      <div className="col-span-2">
-                        <div style={{ color: 'var(--text-soft)' }}>Realized P&L</div>
-                        <div>{formatPnl(thesis.realizedPnl)}</div>
+                    {thesis.realizedPnl !== undefined && thesis.realizedPnl !== null && (
+                      <div>
+                        <div className="text-xs mb-0.5" style={{ color: 'var(--text-soft)', fontFamily: 'var(--font-jetbrains-mono), monospace', letterSpacing: '0.1em' }}>REALIZED PNL</div>
+                        <div className="text-sm font-medium" style={{ color: thesis.realizedPnl >= 0 ? '#10b981' : '#ef4444' }}>
+                          {thesis.realizedPnl >= 0 ? '+' : ''}{thesis.realizedPnl.toFixed(2)} USDC
+                        </div>
                       </div>
                     )}
-                  </div>
-
-                  {/* Date */}
-                  <div className="mt-4 pt-4 border-t" style={{ borderColor: 'var(--border)' }}>
-                    <div className="text-xs" style={{ color: 'var(--text-soft)' }}>
-                      {new Date(thesis.createdAt).toLocaleDateString()}
+                    <div className="ml-auto self-end">
+                      <div className="text-xs" style={{ color: 'var(--text-soft)', fontFamily: 'var(--font-jetbrains-mono), monospace' }}>
+                        {new Date(thesis.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+                      </div>
                     </div>
                   </div>
                 </div>
