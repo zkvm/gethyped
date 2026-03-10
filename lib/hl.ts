@@ -1,7 +1,8 @@
-const HL_API = "https://api.hyperliquid.xyz/info"
+const HL_INFO_URL = "https://api.hyperliquid.xyz/info"
 
-interface Position {
+export interface HLPosition {
   coin: string
+  baseAsset: string
   entryPrice: number
   size: number
   leverage: number
@@ -10,8 +11,12 @@ interface Position {
   marginUsed: number
 }
 
-async function fetchPositions(walletAddress: string): Promise<Position[]> {
-  const res = await fetch(HL_API, {
+/**
+ * Fetch all positions for any wallet address via HL public API.
+ * No private key needed — clearinghouseState is public.
+ */
+export async function getAllPositions(walletAddress: string): Promise<HLPosition[]> {
+  const res = await fetch(HL_INFO_URL, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -23,18 +28,24 @@ async function fetchPositions(walletAddress: string): Promise<Position[]> {
   if (!res.ok) return []
 
   const data = await res.json()
-  const positions: Position[] = []
+  const positions: HLPosition[] = []
 
   for (const p of data.assetPositions ?? []) {
     const pos = p.position
     if (!pos || parseFloat(pos.szi) === 0) continue
-    const size = Math.abs(parseFloat(pos.szi))
+    const szi = parseFloat(pos.szi)
+    const coin = pos.coin as string
+
+    // Determine baseAsset: native coins are just the name, HIP-3 coins are "dex:ASSET"
+    const baseAsset = coin.includes(":") ? coin.split(":")[1] : coin
+
     positions.push({
-      coin: pos.coin,
+      coin,
+      baseAsset,
       entryPrice: parseFloat(pos.entryPx),
-      size,
+      size: Math.abs(szi),
       leverage: parseFloat(pos.leverage?.value ?? "1"),
-      side: parseFloat(pos.szi) > 0 ? "LONG" : "SHORT",
+      side: szi > 0 ? "LONG" : "SHORT",
       unrealizedPnl: parseFloat(pos.unrealizedPnl),
       marginUsed: parseFloat(pos.marginUsed),
     })
@@ -50,15 +61,15 @@ async function fetchPositions(walletAddress: string): Promise<Position[]> {
 export async function getPosition(
   walletAddress: string,
   positionKey: string
-): Promise<Position | null> {
-  const [asset] = positionKey.split(":")
-  const positions = await fetchPositions(walletAddress)
-  return positions.find((p) => p.coin === asset) ?? null
-}
+): Promise<HLPosition | null> {
+  const [asset, dex] = positionKey.split(":")
+  const positions = await getAllPositions(walletAddress)
 
-/**
- * Get all positions for a wallet address.
- */
-export async function getAllPositions(walletAddress: string): Promise<Position[]> {
-  return fetchPositions(walletAddress)
+  return (
+    positions.find(
+      (p) =>
+        p.baseAsset === asset &&
+        (dex === "__native__" ? p.coin === asset : p.coin === `${dex}:${asset}`)
+    ) ?? null
+  )
 }
