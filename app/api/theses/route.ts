@@ -22,6 +22,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
     }
 
+    // Validate reasoning length
+    if (typeof reasoning !== "string" || reasoning.length > 1500) {
+      return NextResponse.json({ error: "Reasoning must be a string with max 1500 characters" }, { status: 400 })
+    }
+
     // Find wallet
     const wallet = await prisma.wallet.findFirst({
       where: {

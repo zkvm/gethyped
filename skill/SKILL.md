@@ -87,6 +87,7 @@ After successful execution:
 3. **Analyze conversation context** for reasoning (market opinions, macro views, catalysts, forwarded messages).
 4. **If reasoning found:**
    - Run `HP_PRIVATE_KEY=<key> hp positions` for current holdings
+   - **Format reasoning as bullet points** — each point on its own line starting with `- `. If referencing another source (e.g. a forwarded message), tag it with `(via <source>)`. Max 1500 characters total.
    - Generate structured thesis draft:
      ```
      ✅ Trades executed! Positions without theses:
@@ -95,7 +96,10 @@ After successful execution:
      
      📝 Thesis Draft:
      Asset: ETH | Side: Long | Conviction: 4/5 | Timeframe: Medium
-     Reasoning: "Risk-on sentiment as geopolitical tension resolves."
+     Reasoning:
+     - Short is the crowded trade, market will punish bottom shorters (via y22)
+     - Trump signaling war ends soon, de-escalation catalyst
+     - Oil pulling back, reducing macro risk premium
      Catalysts: risk-on-shift, geopolitical-resolution
      
      → Confirm / Modify / Skip
